@@ -1,0 +1,14 @@
+.city-style {
+  border: grey 1px solid;
+  margin: 5px;
+  padding: 5px;
+  font-size: 2em;
+  transition-duration: 300ms;
+  transition-property: background-color, border;
+  transition-timing-function: linear;
+}
+
+.city-style:hover {
+  background-color: teal;
+  border: grey;
+}
