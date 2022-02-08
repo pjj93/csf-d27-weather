@@ -12,16 +12,16 @@ export class WeatherComponent implements OnInit {
 
   weather!: Weather
   city = ''
+  fields = ''
 
   constructor(private weatherService: OpenweathermapService, private activatedRoute: ActivatedRoute) { }
 
   ngOnInit(): void {
     this.city = this.activatedRoute.snapshot.params['city']
+    this.fields = this.activatedRoute.snapshot.queryParams['fields']
     console.info(this.city)
-    // this.weatherService.getWeather(this.city)
-    //   .subscribe(response => {
-    //     this.weather = response
-    //   })
+    this.weatherService.getWeather(this.city)
+      .then(w => this.weather = w)
   }
 
 

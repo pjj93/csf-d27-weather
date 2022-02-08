@@ -1,16 +1,8 @@
 package csf.d6.weather.services;
 
-import static csf.d6.weather.Constants.URL_WEATHER;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.logging.Level;
+import java.util.Objects;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,55 +11,37 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import csf.d6.weather.WeatherApplication;
 import csf.d6.weather.model.Weather;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 
 @Service
 public class WeatherService {
     private final Logger logger = Logger.getLogger(WeatherApplication.class.getName());
     
-    public List<Weather> getWeather(String cityname) {
-        String API_KEY = System.getenv("OPENWEATHER_API_KEY");
-        String url = UriComponentsBuilder
-            .fromUriString(URL_WEATHER)
-            .queryParam("q", cityname)
-            .queryParam("appid", API_KEY) //"de7c6c28aac00ae70193bccadb497054"
-            .queryParam("units", "metric")
-            .toUriString();
+    public static final String WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather";
+	public static final String ENV_OPENWEATHERMAP_KEY = System.getenv("OPENWEATHER_API_KEY");
+    
+	private final String key;
 
-        RequestEntity<Void> req = RequestEntity
-            .get(url)
-            .accept(MediaType.APPLICATION_JSON)
-            .build();
+	public WeatherService() {
+		key = ENV_OPENWEATHERMAP_KEY;
 
-        RestTemplate template = new RestTemplate();
+		if (Objects.isNull(key))
+			logger.warning("%s key is not set".formatted(ENV_OPENWEATHERMAP_KEY));
+	}
 
-        ResponseEntity<String> resp = template.exchange(req, String.class);
+	public Weather getWeather(String city) {
+		final String url = UriComponentsBuilder
+			.fromUriString(WEATHER_URL)
+			.queryParam("q", city.replaceAll(" ", "\\+"))
+			.queryParam("units", "metric")
+			.queryParam("appid", key)
+			.toUriString();
 
-        logger.log(Level.INFO, "Status code: " + resp.getStatusCodeValue());
-        logger.log(Level.INFO, "Payload: " + resp.getBody());
+		final RequestEntity<Void> req = RequestEntity.get(url).build();
 
-        try (InputStream is = new ByteArrayInputStream(resp.getBody().getBytes())) {
-            final JsonReader reader = Json.createReader(is);
-            final JsonObject result = reader.readObject();
-            final JsonArray readings = result.getJsonArray("weather");
-            final String cityName = result.getString("name");
-            final float temperature = (float)result.getJsonObject("main").getJsonNumber("temp").doubleValue();
-            return readings.stream()
-                .map(v -> (JsonObject)v)
-                .map(Weather::create)
-                .map(w -> {
-                    w.setCityName(cityName);
-                    w.setTemperature(temperature);
-                    return w;
-                })
-                .collect(Collectors.toList());
+		final RestTemplate template = new RestTemplate();
 
-        } catch (Exception ex) { }
+		final ResponseEntity<String> resp = template.exchange(req, String.class);
 
-        
-        return Collections.EMPTY_LIST;
-    }    
+		return Weather.toWeather(resp.getBody());
+	}
 }

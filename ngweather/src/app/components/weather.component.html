@@ -1,3 +1,10 @@
 <p>{{'Weather for ' + city}}</p>
-
+<hr>
+<img src="http://openweathermap.org/img/wn/{{ weather?.icon }}@2x.png" alt="{{city + ''s icon'}}">
+<div>
+  Temperature: {{weather?.temp}}
+</div>
+<div>
+  Description: {{weather?.description}}
+</div>
 <button routerLink="">Back</button>

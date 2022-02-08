@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 })
 export class MainComponent implements OnInit {
 
-  cities = ["Singapore", "Tokyo", "London"]
+  cities = ["Singapore", "Tokyo", "London", "Canberra"]
 
   constructor(private router: Router) { }
 

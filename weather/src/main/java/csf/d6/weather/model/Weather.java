@@ -1,7 +1,12 @@
 package csf.d6.weather.model;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+
 import jakarta.json.Json;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
 
 public class Weather {
     private String cityName;
@@ -9,8 +14,6 @@ public class Weather {
     private String description;
     private String icon;
     private Float temperature;
-    private Float latitude;
-    private Float longitude;
 
     public String getCityName() { return this.cityName; }
     public void setCityName(String cityName) { this.cityName = cityName; }
@@ -23,17 +26,11 @@ public class Weather {
 
     public String getIcon() { return this.icon; }
     public void setIcon(String icon) { 
-        this.icon = "http://openweathermap.org/img/wn/%s@2x.png".formatted(icon);
+        this.icon = icon;
     }
 
     public Float getTemperature() { return this.temperature; }
     public void setTemperature(Float temperature) { this.temperature = temperature; }
-
-    public Float getLatitude() { return this.latitude; }
-    public void setLatitude(Float latitude) { this.latitude = latitude; }
-
-    public Float getLongitude() { return this.longitude; }
-    public void setLongitude(Float longitude) { this.longitude = longitude; }
 
     public static Weather create(JsonObject o) {
         final Weather w = new Weather();
@@ -43,6 +40,30 @@ public class Weather {
         return w;
     }
 
+    public static Weather toWeather(String s) {
+		try (InputStream is = new ByteArrayInputStream(s.getBytes())) {
+			JsonReader reader = Json.createReader(is);
+			return toWeather(reader.readObject());
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
+	public static Weather toWeather(JsonObject o) {
+		Weather w = new Weather();
+		w.setCityName(o.getString("name"));
+		JsonArray arr = o.getJsonArray("weather");
+		if (!arr.isEmpty()) {
+			JsonObject wo = arr.getJsonObject(0);
+			w.setMain(wo.getString("main"));
+			w.setDescription(wo.getString("description"));
+			w.setIcon(wo.getString("icon"));
+		}
+		w.setTemperature((float)o.getJsonObject("main").getJsonNumber("temp").doubleValue());
+		return (w);
+	}
+    
     public JsonObject toJson() {
         return Json.createObjectBuilder()
             .add("cityName", cityName)
